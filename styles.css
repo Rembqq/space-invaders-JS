@@ -1,0 +1,9 @@
+html,body { height:100%; margin:0; background:#111; display:flex; align-items:center; justify-content:center; font-family:Arial,Helvetica,sans-serif; color:#eee; }
+#game { background:#000; image-rendering: pixelated; box-shadow: 0 6px 20px rgba(0,0,0,0.7); }
+.hud { position: absolute; top:12px; left:12px; color:#fff; font-weight:700; text-shadow:0 0 6px rgba(0,0,0,.7); }
+.center { position: absolute; top:50%; left:50%; transform:translate(-50%,-50%); text-align:center; }
+button { padding:8px 12px; font-size:16px; }
+
+
+/* responsive */
+@media (max-width:600px){ #game{ width:320px; height:426px; } }
