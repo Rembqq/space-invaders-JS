@@ -31,14 +31,27 @@ export default class Game {
     start(){ this.startGame(); requestAnimationFrame(this.loop.bind(this)); }
 
 
-    startGame(){
+    // startGame(levelIdx = null)
+    startGame(levelIdx = null){
         this.player = new Player(this, CANVAS_W/2 - 40/2, CANVAS_H - 60);
         this.enemyBullets = [];
-        this.invaderManager = new InvaderManager(this);
-        this.levels.loadLevel(2);
+        this.invaderManager = new InvaderManager(this); // без авто-спавна
+
+        // если вызван с index — загрузим этот уровень, иначе загрузим текущий, либо 0
+        const idxToLoad = (typeof levelIdx === 'number') ? levelIdx : (this.levels ? this.levels.current : 0);
+        if (this.levels) {
+        this.levels.loadLevel(idxToLoad);
+        } else {
+        // fallback: если levels нет — создадим простую формацию
+        this.invaderManager.spawnFormation(4,8);
+        }
+
+        this.player.bullets = [];
+        this.enemyBullets = [];
         this.score = 0; this.gameOver = false; this.powers = [];
         this.hudEl.style.display = 'block'; this.overlay.style.display = 'none';
     }
+
 
     loop(ts){ if (!this.lastTime) this.lastTime = ts; const dt = Math.min((ts - this.lastTime)/1000, 0.05); this.lastTime = ts; if (!this.gameOver){ this.update(dt); this.render(); } requestAnimationFrame(this.loop.bind(this)); }
 
@@ -81,7 +94,32 @@ export default class Game {
     }
     applyPowerup(type){ if (type==='triple') this.player.activatePower('triple', 8.0); else if (type==='shield') this.player.activatePower('shield', 7.0); else if (type==='slow') { this.invaderManager.speed *= 0.6; setTimeout(()=> this.invaderManager.speed /= 0.6, 7000); } }
 
-    win(){ this.gameOver = true; this.message.textContent = `You win! Score: ${this.score}`; this.overlay.style.display = 'block'; }
+    saveHighscore(){
+        try {
+          const levelIndex = (this.levels && typeof this.levels.current === 'number') ? this.levels.current : 0;
+          const key = 'si_high_' + levelIndex;
+          const prev = parseInt(localStorage.getItem(key) || '0', 10);
+          if (this.score > prev) {
+            localStorage.setItem(key, String(this.score));
+            // обновим UI если есть
+            if (this.ui && typeof this.ui.setHighForLevel === 'function') {
+              this.ui.setHighForLevel(levelIndex, this.score);
+            }
+          }
+        } catch(e) {
+          // ignore storage errors
+          console.warn('Failed to save highscore', e);
+        }
+      }
+      
+
+      win(){
+        this.saveHighscore();
+        this.gameOver = true;
+        this.message.textContent = `You win! Score: ${this.score}`;
+        this.overlay.style.display = 'block';
+      }
+      
     lose(){ this.gameOver = true; this.message.textContent = `Game Over — Score: ${this.score}`; this.overlay.style.display = 'block'; }
 
     render(){ const ctx = this.ctx; ctx.fillStyle = '#000'; ctx.fillRect(0,0,CANVAS_W,CANVAS_H);
