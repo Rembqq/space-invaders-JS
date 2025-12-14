@@ -1,6 +1,7 @@
 import Player from './player.js';
 import InvaderManager from './invaders.js';
 import LevelManager from './levels.js';
+import UI from './ui.js';
 
 
 const CANVAS_W = 480, CANVAS_H = 640;
@@ -21,6 +22,7 @@ export default class Game {
         this.hudEl = document.getElementById('hud'); this.overlay = document.getElementById('overlay'); this.message = document.getElementById('message');
         this.particles = new ParticleEmitter();
         this.keys = {};
+        this.ui = new UI(this);
         this.levels = new LevelManager(this);
         window.addEventListener('keydown', e => this.keys[e.code] = true);
         window.addEventListener('keyup', e => this.keys[e.code] = false);
@@ -32,7 +34,7 @@ export default class Game {
     startGame(){
         this.player = new Player(this, CANVAS_W/2 - 40/2, CANVAS_H - 60);
         this.enemyBullets = [];
-        this.invaderManager = new InvaderManager(this);//, 4, 8);
+        this.invaderManager = new InvaderManager(this);
         this.levels.loadLevel(2);
         this.score = 0; this.gameOver = false; this.powers = [];
         this.hudEl.style.display = 'block'; this.overlay.style.display = 'none';
