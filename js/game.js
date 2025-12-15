@@ -25,9 +25,17 @@ export default class Game {
         this.score = 0; 
         this.ui = new UI(this);
         this.levels = new LevelManager(this);
-        window.addEventListener('keydown', e => this.keys[e.code] = true);
+        window.addEventListener('keydown', (e) => {
+          //this.keys[e.code] = true);
+          if (e.code === 'Escape' || e.code === 'KeyP') {
+            this.togglePause();
+            return;
+          }
+          this.keys[e.code] = true;
+        });
         window.addEventListener('keyup', e => this.keys[e.code] = false);
-        this.lastTime = null; this.gameOver = false;
+        this.lastTime = null; 
+        this.gameOver = false;
     }
     start(){ this.startGame(); requestAnimationFrame(this.loop.bind(this)); }
 
@@ -50,6 +58,32 @@ export default class Game {
         this.player.bullets = [];
         this.enemyBullets = [];
         this.gameOver = false; 
+        this.paused = false;
+
+        // get pause overlay elements (they exist в index.html)
+        this.pauseOverlay = document.getElementById('pauseOverlay');
+        this.resumeBtn = document.getElementById('resumeBtn');
+        this.restartBtnFromPause = document.getElementById('restartBtnFromPause');
+
+        // обробники кнопок (якщо елементи ще не існують на момент конструкції, перевіряємо)
+        if (this.resumeBtn) {
+          this.resumeBtn.addEventListener('click', (e) => {
+            e.preventDefault();      // безпечніше
+            e.stopPropagation();
+            this.resume();           // явний виклик resume()
+          });
+        }
+        
+        if (this.restartBtnFromPause) {
+          this.restartBtnFromPause.addEventListener('click', (e) =>{
+            // рестарт гри з паузи
+            e.preventDefault();
+            e.stopPropagation();
+            this.resume(); // зняти паузу, щоб startGame() нормально працював
+            this.startGame();
+          });
+        }
+
         this.powers = [];
         this.hudEl.style.display = 'block'; this.overlay.style.display = 'none';
     }
@@ -76,7 +110,24 @@ export default class Game {
     }
 
 
-    loop(ts){ if (!this.lastTime) this.lastTime = ts; const dt = Math.min((ts - this.lastTime)/1000, 0.05); this.lastTime = ts; if (!this.gameOver){ this.update(dt); this.render(); } requestAnimationFrame(this.loop.bind(this)); }
+    loop(ts) { 
+      if (!this.lastTime) this.lastTime = ts;
+      const dt = Math.min((ts - this.lastTime)/1000, 0.05);
+      this.lastTime = ts; 
+      if (this.paused) {
+        // рендеримо, але не змінюємо lastTime (щоб при resume не було великого dt)
+        this.render();
+        requestAnimationFrame(this.loop.bind(this));
+        return;
+      }
+      
+      this.lastTime = ts;
+      if (!this.gameOver) {   
+        this.update(dt);
+        this.render(); 
+      } 
+      requestAnimationFrame(this.loop.bind(this)); 
+    }
 
 
     update(dt){
@@ -86,7 +137,7 @@ export default class Game {
 
         // check score
         this.checkScoreThreshold();
-        
+
         // propagate invader-fired bullets
         const newShots = this.invaderManager.flushShots();
         if (newShots && newShots.length) this.enemyBullets.push(...newShots);
@@ -119,6 +170,36 @@ export default class Game {
         this.hudEl.innerHTML = `Score: ${this.score} &nbsp; Lives: ${this.player.lives}`;
     }
     applyPowerup(type){ if (type==='triple') this.player.activatePower('triple', 8.0); else if (type==='shield') this.player.activatePower('shield', 7.0); else if (type==='slow') { this.invaderManager.speed *= 0.6; setTimeout(()=> this.invaderManager.speed /= 0.6, 7000); } }
+
+    // Pause controls
+    pause(){
+      if (this.gameOver || this.paused) return;            // не ставимо на паузу після закінчення гри
+      this.paused = true;
+      // показуємо overlay паузи
+      if (this.pauseOverlay) this.pauseOverlay.style.display = 'block';
+      // скидаємо lastTime, щоб при resume не було великого dt
+      this.lastTime = null;
+      this.ui?.updatePauseButton();
+    }
+
+    resume(){
+      if (this.gameOver || !this.paused) return;
+      this.paused = false;
+      if (this.pauseOverlay) this.pauseOverlay.style.display = 'none';
+      // скидаємо таймінг — loop поставить lastTime при першому кадрі
+      this.lastTime = null;
+      this.ui?.updatePauseButton();
+    }
+
+    togglePause(forceState){
+      // forceState: true/false або undefined для toggle
+      if (typeof forceState === 'boolean'){
+        if (forceState) this.pause(); else this.resume();
+        return;
+      }
+      if (this.paused) this.resume(); else this.pause();
+    }
+
 
     saveHighscore(){
         try {

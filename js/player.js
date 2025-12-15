@@ -69,7 +69,6 @@ export default class Player{
       this.game.adjustScore(-50);
       this.lives -= 1;
       this.bullets = [];
-      console.log("Evrything fine");
       this.game.enemyBullets = [];
       this.x = 480/2 - this.w/2;
       if (this.lives <= 0) this.game.lose();

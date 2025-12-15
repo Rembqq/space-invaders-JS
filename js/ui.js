@@ -12,6 +12,7 @@ export default class UI {
     }
   
     init() {
+
       // create container
       this.container = document.createElement('div');
       this.container.id = 'ui-panel';
@@ -77,7 +78,24 @@ export default class UI {
       });
       reset.appendChild(resetBtn);
       this.container.appendChild(reset);
-  
+      
+      // pause button
+      this.pauseBtn = document.createElement('button');
+      this.pauseBtn.textContent = 'Pause';
+      this.pauseBtn.style.marginTop = '6px';
+      this.pauseBtn.style.width = '100%';
+      this.pauseBtn.style.padding = '6px';
+      this.pauseBtn.style.fontWeight = '700';
+      this.pauseBtn.style.cursor = 'pointer';
+
+      this.pauseBtn.addEventListener('click', () => {
+        if (!this.game) return;
+        this.game.togglePause();
+        this.updatePauseButton();
+      });
+
+      this.container.appendChild(this.pauseBtn);
+
       document.body.appendChild(this.container);
     }
   
@@ -106,6 +124,12 @@ export default class UI {
       });
     }
   
+    updatePauseButton() {
+      if (!this.pauseBtn || !this.game) return;
+      this.pauseBtn.textContent = this.game.paused ? 'Resume' : 'Pause';
+    }
+    
+
     // read highs from localStorage and render
     updateHighscores() {
       let html = '';
