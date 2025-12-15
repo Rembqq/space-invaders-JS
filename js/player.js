@@ -17,15 +17,22 @@ export default class Player{
         if (keys['ArrowLeft'] || keys['KeyA']) this.x -= this.speed*dt;
         if (keys['ArrowRight']|| keys['KeyD']) this.x += this.speed*dt;
         this.x = Math.max(6, Math.min(480 - this.w - 6, this.x));
-        
-        
         this.fireTimer -= dt;
         if ((keys['Space'] || keys['KeyW'] || keys['ArrowUp']) && this.fireTimer <= 0){ this.shoot(); this.fireTimer = this.fireCooldown; }
         
         
         // update bullets
-        for (let b of this.bullets) b.y -= b.speed*dt;
-        this.bullets = this.bullets.filter(b => b.y + b.h > 0 && !b.hit);
+        for (let b of this.bullets) {
+            b.y -= b.speed*dt;
+        }
+        this.bullets = this.bullets.filter( b => {
+            if (b.hit) return false;
+            if (b.y + b.h <= 0) {
+                this.game.adjustScore(-1);
+                return false;
+            }
+            return true;
+        });
         
         
         // power timers
@@ -59,7 +66,11 @@ export default class Player{
   
     hit(){
       if (this.powers.shield.active){ this.powers.shield.active = false; return; }
-      this.lives -= 1; this.bullets = []; this.game.enemyBullets = [];
+      this.game.adjustScore(-50);
+      this.lives -= 1;
+      this.bullets = [];
+      console.log("Evrything fine");
+      this.game.enemyBullets = [];
       this.x = 480/2 - this.w/2;
       if (this.lives <= 0) this.game.lose();
     }

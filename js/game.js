@@ -22,6 +22,7 @@ export default class Game {
         this.hudEl = document.getElementById('hud'); this.overlay = document.getElementById('overlay'); this.message = document.getElementById('message');
         this.particles = new ParticleEmitter();
         this.keys = {};
+        this.score = 0; 
         this.ui = new UI(this);
         this.levels = new LevelManager(this);
         window.addEventListener('keydown', e => this.keys[e.code] = true);
@@ -40,16 +41,38 @@ export default class Game {
         // если вызван с index — загрузим этот уровень, иначе загрузим текущий, либо 0
         const idxToLoad = (typeof levelIdx === 'number') ? levelIdx : (this.levels ? this.levels.current : 0);
         if (this.levels) {
-        this.levels.loadLevel(idxToLoad);
+            this.levels.loadLevel(idxToLoad);
         } else {
         // fallback: если levels нет — создадим простую формацию
-        this.invaderManager.spawnFormation(4,8);
+            this.invaderManager.spawnFormation(4,8);
         }
 
         this.player.bullets = [];
         this.enemyBullets = [];
-        this.score = 0; this.gameOver = false; this.powers = [];
+        this.gameOver = false; 
+        this.powers = [];
         this.hudEl.style.display = 'block'; this.overlay.style.display = 'none';
+    }
+
+    adjustScore(delta) {
+      if (typeof this.score !== 'number') this.score = 0;
+      this.score += delta;
+
+      if (this.hudEl && this.player) {
+        this.hudEl.innerHTML = `Score: ${this.score} &nbsp; Lives: ${this.player.lives}`;
+      }
+
+      if (this.score <= -10) {
+        this.saveHighscore();
+        this.lose();
+      }
+    }
+
+    checkScoreThreshold() {
+      if (this.score <= -10) {
+        this.saveHighscore();
+        this.lose();
+      }
     }
 
 
@@ -61,6 +84,9 @@ export default class Game {
         // invaders update
         this.invaderManager.update(dt);
 
+        // check score
+        this.checkScoreThreshold();
+        
         // propagate invader-fired bullets
         const newShots = this.invaderManager.flushShots();
         if (newShots && newShots.length) this.enemyBullets.push(...newShots);
@@ -72,7 +98,7 @@ export default class Game {
         // check collisions player bullets -> invaders via manager
         for (let b of this.player.bullets){
             const hit = this.invaderManager.checkHit(b);
-            if (hit){ b.hit = true; this.particles.spawn(hit.x + hit.w/2, hit.y + hit.h/2, '#ffb86b', 16); if (!hit.alive) this.score += (hit.type==='tank'?30:10); }
+            if (hit){ b.hit = true; this.particles.spawn(hit.x + hit.w/2, hit.y + hit.h/2, '#ffb86b', 16); if (!hit.alive) this.score += (hit.type==='tank'?50:20); }
         }
         this.player.bullets = this.player.bullets.filter(b => !b.hit);
 
@@ -133,7 +159,6 @@ export default class Game {
         this.particles.render(ctx);
     }
 }
-
 // auto-start if loaded directly
 const canvas = document.getElementById('game');
 const restartBtn = document.getElementById('restart');

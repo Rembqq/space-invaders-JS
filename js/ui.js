@@ -15,7 +15,7 @@ export default class UI {
       // create container
       this.container = document.createElement('div');
       this.container.id = 'ui-panel';
-      // minimal inline styles — можно переопределить в styles.css
+      
       this.container.style.position = 'absolute';
       this.container.style.top = '12px';
       this.container.style.right = '12px';

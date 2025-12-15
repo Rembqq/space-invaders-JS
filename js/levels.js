@@ -21,13 +21,13 @@ export const LEVELS = [
       description: 'Mixed threats (bigger)',
       opts: {
         baseSpeed: 26,
-        fastMultiplier: 2.0, // в 2 раза быстрее если все fast живы
+        fastMultiplier: 2.0, 
         fireInterval: 0.55,
-        spacingH: 8,   // меньше расстояние между колонками — пример
+        spacingH: 8,   
         spacingV: 16
       }
     },
-    // пример уровня с очень быстрым роем
+
     {
       id: 3,
       rows: 6,
@@ -37,7 +37,7 @@ export const LEVELS = [
       opts: {
         baseSpeed: 22,
         fastMultiplier: 1.7,
-        fireInterval: 0.45,
+        fireInterval: 0.35,
         spacingH: 4
       }
     }
